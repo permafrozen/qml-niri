@@ -214,6 +214,16 @@ Available window properties:
 - `isFocused`: Currently focused window
 - `isFloating`: Floating window state
 - `isUrgent`: Window urgency flag
+- `columnIndex`: Tiled window column index in niri's scrolling layout (1-based, 0 if unavailable)
+- `tileIndex`: Tiled window index within its column (1-based, 0 if unavailable)
+- `tileWidth`: Tile width in logical pixels (includes niri decorations like borders)
+- `tileHeight`: Tile height in logical pixels (includes niri decorations like borders)
+- `windowWidth`: Window visual geometry width in logical pixels (without niri decorations)
+- `windowHeight`: Window visual geometry height in logical pixels (without niri decorations)
+- `tilePosX`: Tile X position in current workspace view (`NaN` if unavailable)
+- `tilePosY`: Tile Y position in current workspace view (`NaN` if unavailable)
+- `windowOffsetX`: Window visual geometry X offset inside its tile
+- `windowOffsetY`: Window visual geometry Y offset inside its tile
 - `iconPath`: Absolute path to application icon (empty if not found)
 
 #### Application icons

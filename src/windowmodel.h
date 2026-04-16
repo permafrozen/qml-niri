@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QQmlEngine>
+#include <limits>
 
 class Window : public QObject
 {
@@ -17,12 +18,28 @@ class Window : public QObject
     Q_PROPERTY(bool isFocused MEMBER isFocused CONSTANT)
     Q_PROPERTY(bool isFloating MEMBER isFloating CONSTANT)
     Q_PROPERTY(bool isUrgent MEMBER isUrgent CONSTANT)
+    Q_PROPERTY(qint32 columnIndex MEMBER columnIndex CONSTANT)
+    Q_PROPERTY(qint32 tileIndex MEMBER tileIndex CONSTANT)
+    Q_PROPERTY(qreal tileWidth MEMBER tileWidth CONSTANT)
+    Q_PROPERTY(qreal tileHeight MEMBER tileHeight CONSTANT)
+    Q_PROPERTY(qint32 windowWidth MEMBER windowWidth CONSTANT)
+    Q_PROPERTY(qint32 windowHeight MEMBER windowHeight CONSTANT)
+    Q_PROPERTY(qreal tilePosX MEMBER tilePosX CONSTANT)
+    Q_PROPERTY(qreal tilePosY MEMBER tilePosY CONSTANT)
+    Q_PROPERTY(qreal windowOffsetX MEMBER windowOffsetX CONSTANT)
+    Q_PROPERTY(qreal windowOffsetY MEMBER windowOffsetY CONSTANT)
     Q_PROPERTY(QString iconPath MEMBER iconPath CONSTANT)
 
 public:
     explicit Window(QObject *parent = nullptr)
         : QObject(parent), id(0), pid(-1), workspaceId(0),
-          isFocused(false), isFloating(false), isUrgent(false) {}
+          isFocused(false), isFloating(false), isUrgent(false),
+          columnIndex(0), tileIndex(0),
+          tileWidth(0), tileHeight(0),
+          windowWidth(0), windowHeight(0),
+          tilePosX(std::numeric_limits<qreal>::quiet_NaN()),
+          tilePosY(std::numeric_limits<qreal>::quiet_NaN()),
+          windowOffsetX(0), windowOffsetY(0) {}
 
     quint64 id;
     QString title;
@@ -32,6 +49,16 @@ public:
     bool isFocused;
     bool isFloating;
     bool isUrgent;
+    qint32 columnIndex;
+    qint32 tileIndex;
+    qreal tileWidth;
+    qreal tileHeight;
+    qint32 windowWidth;
+    qint32 windowHeight;
+    qreal tilePosX;
+    qreal tilePosY;
+    qreal windowOffsetX;
+    qreal windowOffsetY;
     QString iconPath;
 };
 
@@ -52,7 +79,17 @@ public:
         IsFocusedRole,
         IsFloatingRole,
         IsUrgentRole,
-        IconPathRole
+        IconPathRole,
+        ColumnIndexRole,
+        TileIndexRole,
+        TileWidthRole,
+        TileHeightRole,
+        WindowWidthRole,
+        WindowHeightRole,
+        TilePosXRole,
+        TilePosYRole,
+        WindowOffsetXRole,
+        WindowOffsetYRole
     };
 
     explicit WindowModel(QObject *parent = nullptr);
@@ -78,6 +115,7 @@ private:
     void handleWindowFocusChanged(const QJsonValue &idValue);
     void handleWindowUrgencyChanged(quint64 id, bool urgent);
     void handleWindowLayoutsChanged(const QJsonArray &changes);
+    void parseWindowLayout(Window *window, const QJsonObject &layoutObj);
 
     Window* parseWindow(const QJsonObject &obj);
     int findWindowIndex(quint64 id) const;

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <limits>
 #include <QDebug>
 #include <QJsonArray>
 #include "icon.h"
@@ -46,6 +47,26 @@ QVariant WindowModel::data(const QModelIndex &index, int role) const
         return win->isFloating;
     case IsUrgentRole:
         return win->isUrgent;
+    case ColumnIndexRole:
+        return win->columnIndex;
+    case TileIndexRole:
+        return win->tileIndex;
+    case TileWidthRole:
+        return win->tileWidth;
+    case TileHeightRole:
+        return win->tileHeight;
+    case WindowWidthRole:
+        return win->windowWidth;
+    case WindowHeightRole:
+        return win->windowHeight;
+    case TilePosXRole:
+        return win->tilePosX;
+    case TilePosYRole:
+        return win->tilePosY;
+    case WindowOffsetXRole:
+        return win->windowOffsetX;
+    case WindowOffsetYRole:
+        return win->windowOffsetY;
     case IconPathRole:
         return win->iconPath;
     default:
@@ -64,6 +85,16 @@ QHash<int, QByteArray> WindowModel::roleNames() const
     roles[IsFocusedRole] = "isFocused";
     roles[IsFloatingRole] = "isFloating";
     roles[IsUrgentRole] = "isUrgent";
+    roles[ColumnIndexRole] = "columnIndex";
+    roles[TileIndexRole] = "tileIndex";
+    roles[TileWidthRole] = "tileWidth";
+    roles[TileHeightRole] = "tileHeight";
+    roles[WindowWidthRole] = "windowWidth";
+    roles[WindowHeightRole] = "windowHeight";
+    roles[TilePosXRole] = "tilePosX";
+    roles[TilePosYRole] = "tilePosY";
+    roles[WindowOffsetXRole] = "windowOffsetX";
+    roles[WindowOffsetYRole] = "windowOffsetY";
     roles[IconPathRole] = "iconPath";
     return roles;
 }
@@ -217,9 +248,34 @@ void WindowModel::handleWindowUrgencyChanged(quint64 id, bool urgent)
 
 void WindowModel::handleWindowLayoutsChanged(const QJsonArray &changes)
 {
-    // Window layout changes don't affect the properties we're tracking
-    // This is mostly for position/size which we're not exposing yet
-    Q_UNUSED(changes);
+    static const QList<int> layoutRoles = {
+        ColumnIndexRole,
+        TileIndexRole,
+        TileWidthRole,
+        TileHeightRole,
+        WindowWidthRole,
+        WindowHeightRole,
+        TilePosXRole,
+        TilePosYRole,
+        WindowOffsetXRole,
+        WindowOffsetYRole
+    };
+
+    for (const QJsonValue &changeValue : changes) {
+        const QJsonArray change = changeValue.toArray();
+        const quint64 id = change.at(0).toInteger();
+        const QJsonObject layoutObj = change.at(1).toObject();
+
+        const int idx = findWindowIndex(id);
+        if (idx == -1) {
+            qCWarning(niriLog) << "Window not found for layout change:" << id;
+            continue;
+        }
+
+        parseWindowLayout(m_windows[idx], layoutObj);
+        const QModelIndex modelIdx = index(idx);
+        emit dataChanged(modelIdx, modelIdx, layoutRoles);
+    }
 }
 
 Window* WindowModel::parseWindow(const QJsonObject &obj)
@@ -238,9 +294,34 @@ Window* WindowModel::parseWindow(const QJsonObject &obj)
     win->isFocused = obj["is_focused"].toBool();
     win->isFloating = obj["is_floating"].toBool();
     win->isUrgent = obj["is_urgent"].toBool();
+    parseWindowLayout(win, obj["layout"].toObject());
     win->iconPath = IconLookup::lookup(win->appId);
 
     return win;
+}
+
+void WindowModel::parseWindowLayout(Window *window, const QJsonObject &layoutObj)
+{
+    const QJsonArray scrollingPos = layoutObj.value("pos_in_scrolling_layout").toArray();
+    window->columnIndex = scrollingPos.at(0).toInt();
+    window->tileIndex = scrollingPos.at(1).toInt();
+
+    const QJsonArray tileSize = layoutObj.value("tile_size").toArray();
+    window->tileWidth = tileSize.at(0).toDouble();
+    window->tileHeight = tileSize.at(1).toDouble();
+
+    const QJsonArray windowSize = layoutObj.value("window_size").toArray();
+    window->windowWidth = windowSize.at(0).toInt();
+    window->windowHeight = windowSize.at(1).toInt();
+
+    const qreal noTilePos = std::numeric_limits<qreal>::quiet_NaN();
+    const QJsonArray tilePos = layoutObj.value("tile_pos_in_workspace_view").toArray();
+    window->tilePosX = tilePos.at(0).toDouble(noTilePos);
+    window->tilePosY = tilePos.at(1).toDouble(noTilePos);
+
+    const QJsonArray windowOffset = layoutObj.value("window_offset_in_tile").toArray();
+    window->windowOffsetX = windowOffset.at(0).toDouble();
+    window->windowOffsetY = windowOffset.at(1).toDouble();
 }
 
 int WindowModel::findWindowIndex(quint64 id) const
