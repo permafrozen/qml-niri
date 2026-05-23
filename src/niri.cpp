@@ -152,3 +152,8 @@ QVariantMap Niri::sendAction(const QJsonObject &action)
 
     return okResult();
 }
+
+QVariantMap Niri::sendRawAction(const QVariantMap &action)
+{
+    return sendAction(QJsonObject::fromVariantMap(action));
+}

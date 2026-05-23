@@ -48,6 +48,12 @@ public:
 
     Q_INVOKABLE QVariantMap toggleOverview();
 
+    // Escape hatch: send an arbitrary niri Action as a JSON-shaped map.
+    // The map must match niri's IPC Action schema. Prefer the typed
+    // wrappers above when available. See the note on the return shape
+    // above.
+    Q_INVOKABLE QVariantMap sendRawAction(const QVariantMap &action);
+
 signals:
     void connected();
     void disconnected();

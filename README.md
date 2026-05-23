@@ -318,6 +318,7 @@ niri.closeWindowOrFocused()         // Close focused window
 Other:
 ```qml
 niri.toggleOverview()               // Show or hide the workspace overview
+niri.sendRawAction({ ... })         // Send an arbitrary niri Action
 ```
 
 
@@ -341,6 +342,22 @@ Failures include "not connected", IPC write/read errors, and action rejections f
 Note that per-action failures are **not** reported via the `errorOccurred` signal. That signal is reserved for connection-level problems such as socket disconnects or event stream subscription failures.
 
 
+#### Escape hatch: sendRawAction
+
+For actions not covered by the typed wrappers, `sendRawAction` lets you send an arbitrary niri [`Action`](https://docs.rs/niri-ipc/latest/niri_ipc/enum.Action.html) as a JSON-shaped object:
+
+```qml
+const result = niri.sendRawAction({
+    "FocusWorkspace": { "reference": { "Index": 2 } }
+})
+if (!result.ok) {
+    console.error(result.error)
+}
+```
+
+Prefer the typed wrappers when available; `sendRawAction` performs no schema validation and will only report failures returned by niri itself.
+
+
 ## Testing
 
 The plugin was mostly tested manually, using a few [integration tests](/test). You can run them with:
@@ -354,6 +371,9 @@ just test workspaces
 
 # Test window model
 just test windows
+
+# Test arbitrary actions (sendRawAction)
+just test action
 ```
 
 Pull requests to improve the testing situation, add unit tests, etc., are very welcome!
@@ -378,6 +398,7 @@ Pull requests to improve the testing situation, add unit tests, etc., are very w
 - `closeWindow(id)`: object - Close specific window
 - `closeWindowOrFocused()`: object - Close focused window
 - `toggleOverview()`: object - Show or hide the workspace overview
+- `sendRawAction(action)`: object - Send an arbitrary niri Action
 
 All action methods return a result object of the form `{ ok: bool, error?: string }`.
 See [Action results and error handling](#action-results-and-error-handling).
