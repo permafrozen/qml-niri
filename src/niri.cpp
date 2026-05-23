@@ -38,7 +38,12 @@ Niri::~Niri()
 
 bool Niri::connect()
 {
-    return m_ipcClient->connect();
+    QString err;
+    if (!m_ipcClient->connect(&err)) {
+        emit errorOccurred(err);
+        return false;
+    }
+    return true;
 }
 
 bool Niri::isConnected() const
@@ -123,12 +128,15 @@ void Niri::toggleOverview()
 void Niri::sendAction(const QJsonObject &action)
 {
     if (!isConnected()) {
-        qCWarning(niriLog) << "Cannot send action: not connected to niri";
+        emit errorOccurred(QStringLiteral("Cannot send action: not connected to niri"));
         return;
     }
 
     QJsonObject request;
     request["Action"] = action;
 
-    m_ipcClient->sendRequest(request);
+    QString err;
+    if (!m_ipcClient->sendRequest(request, &err)) {
+        emit errorOccurred(err.isEmpty() ? QStringLiteral("Unknown IPC error") : err);
+    }
 }

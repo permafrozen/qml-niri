@@ -13,9 +13,9 @@ public:
     explicit IPCClient(QObject *parent = nullptr);
     ~IPCClient();
 
-    bool connect();
+    bool connect(QString *errorOut = nullptr);
     bool isConnected() const;
-    bool sendRequest(const QJsonObject &request);
+    bool sendRequest(const QJsonObject &request, QString *errorOut = nullptr);
 
 signals:
     void connected();
