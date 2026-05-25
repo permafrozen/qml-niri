@@ -261,6 +261,7 @@ void WindowModel::handleWindowLayoutsChanged(const QJsonArray &changes)
         WindowOffsetYRole
     };
 
+    bool focusedChanged = false;
     for (const QJsonValue &changeValue : changes) {
         const QJsonArray change = changeValue.toArray();
         const quint64 id = change.at(0).toInteger();
@@ -275,7 +276,13 @@ void WindowModel::handleWindowLayoutsChanged(const QJsonArray &changes)
         parseWindowLayout(m_windows[idx], layoutObj);
         const QModelIndex modelIdx = index(idx);
         emit dataChanged(modelIdx, modelIdx, layoutRoles);
+
+        if (m_windows[idx]->isFocused)
+            focusedChanged = true;
     }
+
+    if (focusedChanged)
+        emit focusedWindowChanged();
 }
 
 Window* WindowModel::parseWindow(const QJsonObject &obj)
